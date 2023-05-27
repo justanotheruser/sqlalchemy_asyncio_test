@@ -1,58 +1,62 @@
-
 # =============================================================================
 # Main script code.
 # =============================================================================
 
 import asyncio
-import signal
-from concurrent.futures import Executor, ThreadPoolExecutor
+import logging
 from typing import Dict, Optional, Any
+
 from delayed_keyboard_interrupt import DelayedKeyboardInterrupt
+
+logger = logging.getLogger("AirBot")
+
 
 class AsyncService1:
     """
     Dummy service that does nothing.
     """
+
     def __init__(self):
         pass
 
     async def start(self):
-        print(f'AsyncService1: starting')
+        logger.info(f'AsyncService1: starting')
         await asyncio.sleep(1)
-        print(f'AsyncService1: started')
+        logger.info(f'AsyncService1: started')
 
     async def stop(self):
-        print(f'AsyncService1: stopping')
+        logger.info(f'AsyncService1: stopping')
         await asyncio.sleep(1)
-        print(f'AsyncService1: stopped')
+        logger.info(f'AsyncService1: stopped')
 
 
 class AsyncService2:
     """
     Dummy service that does nothing.
     """
+
     def __init__(self):
         pass
 
     async def start(self):
-        print(f'AsyncService2: starting')
+        logger.info(f'AsyncService2: starting')
         await asyncio.sleep(1)
-        print(f'AsyncService2: started')
+        logger.info(f'AsyncService2: started')
 
     async def stop(self):
-        print(f'AsyncService2: stopping')
+        logger.info(f'AsyncService2: stopping')
         await asyncio.sleep(1)
-        print(f'AsyncService2: stopped')
+        logger.info(f'AsyncService2: stopped')
 
 
 class AsyncApplication:
     def __init__(self):
-        self._loop = None                               # type: Optional[asyncio.AbstractEventLoop]
-        self._wait_event = None                         # type: Optional[asyncio.Event]
-        self._wait_task = None                          # type: Optional[asyncio.Task]
+        self._loop = None  # type: Optional[asyncio.AbstractEventLoop]
+        self._wait_event = None  # type: Optional[asyncio.Event]
+        self._wait_task = None  # type: Optional[asyncio.Task]
 
-        self._service1 = None                           # type: Optional[AsyncService1]
-        self._service2 = None                           # type: Optional[AsyncService2]
+        self._service1 = None  # type: Optional[AsyncService1]
+        self._service2 = None  # type: Optional[AsyncService2]
 
     def run(self):
         self._loop = asyncio.new_event_loop()
@@ -81,7 +85,7 @@ class AsyncApplication:
             #
 
             except KeyboardInterrupt:
-                print(f'!!! AsyncApplication.run: got KeyboardInterrupt during start')
+                logger.info(f'!!! AsyncApplication.run: got KeyboardInterrupt during start')
                 raise
 
             #
@@ -89,9 +93,9 @@ class AsyncApplication:
             # Wait for a termination event infinitelly.
             #
 
-            print(f'AsyncApplication.run: entering wait loop')
+            logger.info(f'AsyncApplication.run: entering wait loop')
             self._wait()
-            print(f'AsyncApplication.run: exiting wait loop')
+            logger.info(f'AsyncApplication.run: exiting wait loop')
 
         except KeyboardInterrupt:
             #
@@ -101,7 +105,7 @@ class AsyncApplication:
                 with DelayedKeyboardInterrupt():
                     self._stop()
             except KeyboardInterrupt:
-                print(f'!!! AsyncApplication.run: got KeyboardInterrupt during stop')
+                logger.info(f'!!! AsyncApplication.run: got KeyboardInterrupt during stop')
 
     async def _astart(self):
         self._service1 = AsyncService1()
@@ -178,11 +182,11 @@ class AsyncApplication:
 
         def __loop_exception_handler(loop, context: Dict[str, Any]):
             if type(context['exception']) == ConnectionResetError:
-                print(f'!!! AsyncApplication._stop.__loop_exception_handler: suppressing ConnectionResetError')
+                logger.info(f'!!! AsyncApplication._stop.__loop_exception_handler: suppressing ConnectionResetError')
             elif type(context['exception']) == OSError:
-                print(f'!!! AsyncApplication._stop.__loop_exception_handler: suppressing OSError')
+                logger.info(f'!!! AsyncApplication._stop.__loop_exception_handler: suppressing OSError')
             else:
-                print(f'!!! AsyncApplication._stop.__loop_exception_handler: unhandled exception: {context}')
+                logger.info(f'!!! AsyncApplication._stop.__loop_exception_handler: unhandled exception: {context}')
 
         self._loop.set_exception_handler(__loop_exception_handler)
 
@@ -205,7 +209,7 @@ class AsyncApplication:
             #
             # ... and close the loop.
             #
-            print(f'AsyncApplication._stop: closing event loop')
+            logger.info(f'AsyncApplication._stop: closing event loop')
             self._loop.close()
 
     def _wait(self):
@@ -233,7 +237,7 @@ class AsyncApplication:
         #
 
         to_cancel = asyncio.tasks.all_tasks(self._loop)
-        print(f'AsyncApplication._cancel_all_tasks: cancelling {len(to_cancel)} tasks ...')
+        logger.info(f'AsyncApplication._cancel_all_tasks: cancelling {len(to_cancel)} tasks ...')
 
         if not to_cancel:
             return
@@ -258,10 +262,22 @@ class AsyncApplication:
 
 
 def main():
-    print(f'main: begin')
+    setup_file_logger(logger)
+    logger.setLevel(logging.INFO)
+    logger.info(f'main: begin')
     app = AsyncApplication()
     app.run()
-    print(f'main: end')
+    logger.info(f'main: end')
+
+
+def setup_file_logger(lgr: logging.Logger) -> None:
+    ch = logging.FileHandler("AirBot.log", encoding="utf-8")
+    ch.setLevel(logging.INFO)
+    ch_formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
+    ch.setFormatter(ch_formatter)
+    lgr.addHandler(ch)
 
 
 if __name__ == '__main__':
