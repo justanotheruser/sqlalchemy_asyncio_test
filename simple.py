@@ -67,7 +67,7 @@ class AsyncApplication:
             #
 
             try:
-                with DelayedKeyboardInterrupt():
+                with DelayedKeyboardInterrupt(propagate_to_forked_processes=True):
                     self._start()
 
             #
@@ -102,7 +102,7 @@ class AsyncApplication:
             # The _stop() is also shielded from termination.
             #
             try:
-                with DelayedKeyboardInterrupt():
+                with DelayedKeyboardInterrupt(propagate_to_forked_processes=True):
                     self._stop()
             except KeyboardInterrupt:
                 logger.info(f'!!! AsyncApplication.run: got KeyboardInterrupt during stop')
