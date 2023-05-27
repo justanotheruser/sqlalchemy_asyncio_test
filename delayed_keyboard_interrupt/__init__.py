@@ -5,6 +5,9 @@
 
 import os
 import signal
+import logging
+
+logger = logging.getLogger("AirBot")
 
 
 __all__ = [
@@ -64,15 +67,15 @@ class DelayedKeyboardInterrupt:
         #
         if os.getpid() != self._pid:
             if self._propagate_to_forked_processes is False:
-                print(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; '
+                logger.info(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; '
                       f'PID mismatch: {os.getpid()=}, {self._pid=}, calling original handler')
                 self._old_signal_handler_map[self._sig](self._sig, self._frame)
             elif self._propagate_to_forked_processes is None:
-                print(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; '
+                logger.info(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; '
                       f'PID mismatch: {os.getpid()=}, ignoring the signal')
                 return
             # elif self._propagate_to_forked_processes is True:
             #   ... passthrough
 
-        print(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; delaying KeyboardInterrupt')
+        logger.info(f'!!! DelayedKeyboardInterrupt._handler: {SIGNAL_TRANSLATION_MAP[sig]} received; delaying KeyboardInterrupt')
 
